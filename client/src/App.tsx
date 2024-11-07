@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
-const SOCKET_SERVER = 'http://localhost:3000';
+const SOCKET_SERVER = import.meta.env.VITE_SOCKET_SERVER;
 
 type SocketType = ReturnType<typeof io>;
 
@@ -15,7 +15,9 @@ function App() {
   const myIdRef = useRef<string>('');
 
   useEffect(() => {
-    socketRef.current = io(SOCKET_SERVER);
+    socketRef.current = io(SOCKET_SERVER, {
+      transports: ['websocket'],
+    });
 
     socketRef.current.on('connect', () => {
       console.log('Connected to server');

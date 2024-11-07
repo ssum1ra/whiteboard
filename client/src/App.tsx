@@ -34,6 +34,11 @@ function App() {
       });
     });
 
+    socketRef.current.on('joinedRoom', (message: string) => {
+      console.log('Successfully joined room:', message);
+      // 여기에 방에 성공적으로 입장했을 때 수행할 추가 작업을 넣을 수 있습니다.
+    });
+
     // 새로운 유저가 들어왔을 때
     socketRef.current.on('user-joined', (userId: string) => {
       console.log('New user joined:', userId);
@@ -44,17 +49,17 @@ function App() {
       }
     });
 
-    socketRef.current.on('offer', async ({ offer, senderId }) => {
+    socketRef.current.on('offer', async ({ offer, senderId } : { offer: RTCSessionDescriptionInit; senderId: string }) => {
       console.log('Received offer from:', senderId);
       await handleOffer(offer, senderId);
     });
 
-    socketRef.current.on('answer', async ({ answer, senderId }) => {
+    socketRef.current.on('answer', async ({ answer, senderId } : { answer: RTCSessionDescriptionInit; senderId: string }) => {
       console.log('Received answer from:', senderId);
       await handleAnswer(answer, senderId);
     });
 
-    socketRef.current.on('ice-candidate', async ({ candidate, senderId }) => {
+    socketRef.current.on('ice-candidate', async ({ candidate, senderId } : { candidate: RTCIceCandidateInit; senderId: string }) => {
       await handleIceCandidate(candidate, senderId);
     });
 

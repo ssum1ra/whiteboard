@@ -114,7 +114,8 @@ function App() {
           username: 'openai',
           credential: 'openai'
         }
-      ]
+      ],
+      iceTransportPolicy: 'relay',
     });
 
     peerConnection.onicecandidate = (event) => {

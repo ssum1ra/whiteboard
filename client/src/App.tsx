@@ -97,7 +97,10 @@ function App() {
   const createPeerConnection = (userId: string, initiator: boolean): RTCPeerConnection => {
     console.log(`Creating peer connection with ${userId} (initiator: ${initiator})`);
     const peerConnection = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'turn:your-turn-server-url', username: 'user', credential: 'pass' }
+      ]
     });
 
     peerConnection.onicecandidate = (event) => {

@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { WebRTCGateway } from './webrtc.gateway';
+import { RoomModule } from './room/room.module';
+import { SignalingModule } from './signaling/signaling.module';
 
 @Module({
-  providers: [WebRTCGateway],
+  imports: [RoomModule, SignalingModule],
 })
 export class AppModule {}

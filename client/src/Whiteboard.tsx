@@ -1,20 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
-
-export interface DrawData {
-    x: number;
-    y: number;
-    type: 'start' | 'draw' | 'end';
-  }
-  
-  export interface ChatMessage {
-    userId: string;
-    message: string;
-    timestamp: number;
-  }
+import { ChatMessage } from "./types/chat.types";
+import { DrawData } from "./types/draw.types";
   
 type SocketType = ReturnType<typeof io>;
 
+interface RoomHistory {
+  drawings: DrawData[];
+  messages: ChatMessage[];
+}
 
 const Whiteboard: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,6 +33,30 @@ const Whiteboard: React.FC = () => {
     // Socket 이벤트 리스너 설정
     useEffect(() => {
       if (!socket) return;
+
+      // Room 참가 시 히스토리 수신 
+      socket.emit('joinRoom', 'default-room', (history: RoomHistory) => {
+        setMessages(history.messages);
+        
+        // 저장된 그리기 내역 복원
+        if (contextRef.current && history.drawings.length > 0) {
+          history.drawings.forEach(drawData => {
+            switch(drawData.type) {
+              case 'start':
+                contextRef.current?.beginPath();
+                contextRef.current?.moveTo(drawData.x, drawData.y);
+                break;
+              case 'draw':
+                contextRef.current?.lineTo(drawData.x, drawData.y);
+                contextRef.current?.stroke();
+                break;
+              case 'end':
+                contextRef.current?.closePath();
+                break;
+            }
+          });
+        }
+      });
   
       // 그리기 이벤트 리스너
       socket.on('draw', (drawData: DrawData) => {
@@ -62,7 +80,6 @@ const Whiteboard: React.FC = () => {
       // 채팅 메시지 수신
       socket.on('chat', (message: ChatMessage) => {
         setMessages(prev => [...prev, message]);
-        // 새 메시지가 오면 스크롤을 아래로
         setTimeout(() => {
           if (chatRef.current) {
             chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -91,14 +108,8 @@ const Whiteboard: React.FC = () => {
       context.lineWidth = 2;
       context.lineCap = 'round';
       contextRef.current = context;
+    }, []);
   
-      if (socket) {
-        // Room 참가
-        socket.emit('joinRoom', 'default-room');
-      }
-    }, [socket]);
-  
-    // 그리기 관련 함수들...
     const getCoordinates = (event: React.MouseEvent): [number, number] => {
       if (!canvasRef.current) return [0, 0];
       const canvas = canvasRef.current;
@@ -117,9 +128,16 @@ const Whiteboard: React.FC = () => {
       contextRef.current.beginPath();
       contextRef.current.moveTo(x, y);
       
+      const drawData: DrawData = {
+        type: 'start',
+        x,
+        y,
+        userId
+      };
+      
       socket.emit('draw', {
         roomId: 'default-room',
-        drawData: { x, y, type: 'start' as const }
+        drawData
       });
     };
   
@@ -130,9 +148,16 @@ const Whiteboard: React.FC = () => {
       contextRef.current.lineTo(x, y);
       contextRef.current.stroke();
       
+      const drawData: DrawData = {
+        type: 'draw',
+        x,
+        y,
+        userId
+      };
+      
       socket.emit('draw', {
         roomId: 'default-room',
-        drawData: { x, y, type: 'draw' as const }
+        drawData
       });
     };
   
@@ -141,13 +166,19 @@ const Whiteboard: React.FC = () => {
       setIsDrawing(false);
       contextRef.current.closePath();
       
+      const drawData: DrawData = {
+        type: 'end',
+        x: 0,
+        y: 0,
+        userId
+      };
+      
       socket.emit('draw', {
         roomId: 'default-room',
-        drawData: { x: 0, y: 0, type: 'end' as const }
+        drawData
       });
     };
   
-    // 채팅 관련 함수
     const handleMessageSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (!socket || !newMessage.trim()) return;

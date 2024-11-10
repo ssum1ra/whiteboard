@@ -15,7 +15,7 @@ import { ChatMessage } from 'src/types/chat.types';
     origin: '*',
   },
 })
-export class DrawGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 

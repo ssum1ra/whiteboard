@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DrawData, ChatMessage } from '../types/draw.types';
+import { DrawData } from '../types/draw.types';
+import { ChatMessage } from 'src/types/chat.types';
 
 @Injectable()
 export class RoomService {

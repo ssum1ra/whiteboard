@@ -7,16 +7,15 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RoomService } from '../room/room.service';
-import { DrawData, ChatMessage } from '../types/draw.types';
+import { DrawData } from '../types/draw.types';
+import { ChatMessage } from 'src/types/chat.types';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
 })
-export class SignalingGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class DrawGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 

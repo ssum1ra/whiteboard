@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { SignalingGateway } from './signaling.gateway';
+import { DrawGateway } from './draw.gateway';
 import { RoomModule } from '../room/room.module';
 
 @Module({
   imports: [RoomModule],
-  providers: [SignalingGateway],
+  providers: [DrawGateway],
 })
-export class SignalingModule {}
+export class DrawModule {}

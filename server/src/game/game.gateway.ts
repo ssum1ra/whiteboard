@@ -12,7 +12,8 @@ import { ChatMessage } from 'src/types/chat.types';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: true,
+    credentials: true,
   },
 })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {

@@ -22,7 +22,10 @@ const Whiteboard: React.FC = () => {
   
     // Socket 연결 설정
     useEffect(() => {
-      const newSocket = io('http://localhost:3000');
+      const newSocket = io('/', {
+        path: '/socket.io',
+      });
+      
       setSocket(newSocket);
   
       return () => {

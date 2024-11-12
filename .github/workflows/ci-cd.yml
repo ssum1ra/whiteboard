@@ -83,9 +83,4 @@ jobs:
             docker rm whiteboard || true
 
             # 새 컨테이너 실행
-            docker run -d \
-              --name whiteboard \
-              -p 3000:3000 \
-              --restart unless-stopped \
-              # -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              ${{ secrets.DOCKERHUB_USERNAME }}/whiteboard:latest
+            docker run -d --name whiteboard -p 3000:3000 --restart unless-stopped ${{ secrets.DOCKERHUB_USERNAME }}/whiteboard:latest

@@ -1,0 +1,73 @@
+name: Whiteboard CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # 캐시 설정(npm 기준)
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # 프론트엔드 빌드 및 배포
+      - name: Install & Build Frontend
+        working-directory: ./client
+        env:
+          VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      # Object Storage 업로드
+      - name: Deploy to Object Storage
+        env:
+          ACCESSKEY: ${{ secrets.NCP_ACCESS_KEY }}
+          SECRETKEY: ${{ secrets.NCP_SECRET_KEY }}
+        run: |
+          pip install ncloud-sdk
+          ncloud objectstorage upload \
+            --region kr \
+            --bucket test-web30 \
+            --local-path ./client/dist \
+            --access-key $ACCESSKEY \
+            --secret-key $SECRETKEY
+
+      # 백엔드 배포
+      - name: Deploy Backend
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ncloud
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/whiteboard/server
+            git pull
+            npm ci
+            npm run build
+
+            # 서버에 환경변수 파일 생성
+            cat << EOF > .env
+            # DATABASE_URL=${{ secrets.DATABASE_URL }}
+            EOF
+
+            # PM2 재시작
+            pm2 restart whiteboard-server || pm2 start dist/main.js --name "whiteboard-server"

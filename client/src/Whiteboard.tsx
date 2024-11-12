@@ -22,7 +22,7 @@ const Whiteboard: React.FC = () => {
   
     // Socket 연결 설정
     useEffect(() => {
-      const newSocket = io(import.meta.env.VITE_SOCKET_SERVER, {
+      const newSocket = io(import.meta.env.VITE_SOCKET_URL, {
         transports: ['websocket'],
         reconnection: true,
       });

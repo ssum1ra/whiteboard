@@ -43,11 +43,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.NCP_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.NCP_SECRET_KEY }}
         run: |
-          # AWS CLI 설치
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-
           # S3 업로드
           aws s3 sync ./client/dist s3://test-web30 \
             --endpoint-url https://kr.object.ncloudstorage.com \

@@ -47,24 +47,42 @@ jobs:
           aws s3 sync ./client/dist s3://test-web30 \
             --endpoint-url https://kr.object.ncloudstorage.com \
             --region kr-standard
+      # 도커 빌드 & 배포
+      - name: Docker Setup
+        uses: docker/setup-buildx-action@v3
 
-      # 백엔드 배포
-      - name: Deploy Backend
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/whiteboard:latest
+
+      # 서버 배포
+      - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ncloud
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ~/whiteboard/server
-            git pull
-            npm ci
-            npm run build
+            # 새 이미지 풀
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/whiteboard:latest
 
-            # 서버에 환경변수 파일 생성
-            cat << EOF > .env
-            # DATABASE_URL=${{ secrets.DATABASE_URL }}
-            EOF
+            # 기존 컨테이너 정지 & 제거
+            docker stop whiteboard || true
+            docker rm whiteboard || true
 
-            # PM2 재시작
-            pm2 restart whiteboard-server || pm2 start dist/main.js --name "whiteboard-server"
+            # 새 컨테이너 실행
+            docker run -d \
+              --name whiteboard \
+              -p 3000:3000 \
+              --restart unless-stopped \
+              # -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/whiteboard:latest

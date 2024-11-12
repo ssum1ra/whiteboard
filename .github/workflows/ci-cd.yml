@@ -40,16 +40,18 @@ jobs:
       # Object Storage 업로드
       - name: Deploy to Object Storage
         env:
-          ACCESSKEY: ${{ secrets.NCP_ACCESS_KEY }}
-          SECRETKEY: ${{ secrets.NCP_SECRET_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.NCP_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.NCP_SECRET_KEY }}
         run: |
-          pip install ncloud-sdk
-          ncloud objectstorage upload \
-            --region kr \
-            --bucket test-web30 \
-            --local-path ./client/dist \
-            --access-key $ACCESSKEY \
-            --secret-key $SECRETKEY
+          # AWS CLI 설치
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+          # S3 업로드
+          aws s3 sync ./client/dist s3://test-web30 \
+            --endpoint-url https://kr.object.ncloudstorage.com \
+            --region kr-standard
 
       # 백엔드 배포
       - name: Deploy Backend

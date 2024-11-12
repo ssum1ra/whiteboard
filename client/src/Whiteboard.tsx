@@ -205,7 +205,7 @@ const Whiteboard: React.FC = () => {
       <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
         <div className="flex gap-4">
           <div>
-            <h1 className="text-2xl mb-4 text-center">실시간 그림판</h1>
+            <h1 className="text-2xl mb-4 text-center">실시간 그림판 😈</h1>
             <canvas
               ref={canvasRef}
               className="bg-white border border-gray-300 cursor-crosshair"

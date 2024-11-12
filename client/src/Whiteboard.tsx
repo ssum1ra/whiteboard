@@ -22,8 +22,9 @@ const Whiteboard: React.FC = () => {
   
     // Socket 연결 설정
     useEffect(() => {
-      const newSocket = io('/', {
-        path: '/socket.io',
+      const newSocket = io('http://223.130.137.162', {
+        transports: ['websocket'],
+        reconnection: true,
       });
       
       setSocket(newSocket);

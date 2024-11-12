@@ -72,6 +72,9 @@ jobs:
           username: ncloud
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Docker 로그인
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
             # 새 이미지 풀
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/whiteboard:latest
 

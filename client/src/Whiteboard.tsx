@@ -12,11 +12,11 @@ const Whiteboard: React.FC = () => {
     const prevPlayerId = localStorage.getItem('playerId');
     const prevRoomId = localStorage.getItem('roomId');
 
-    socketRef.current = io("http://localhost:3000/game");
-    socketRef2.current = io("http://localhost:3000/draw", {
+    socketRef.current = io("http://175.45.205.6:3000/game");
+    socketRef2.current = io("http://175.45.205.6:3000/drawing", {
       auth: { roomId: prevRoomId, playerId: prevPlayerId}
     });
-    socketRef3.current = io("http://localhost:3000/chat", {
+    socketRef3.current = io("http://175.45.205.6:3000/chat", {
       auth: { roomId: prevRoomId, playerId: prevPlayerId }
     });
 
@@ -30,7 +30,7 @@ const Whiteboard: React.FC = () => {
         });
       } else {
         socketRef.current?.emit("joinRoom", { 
-          roomId: "51c3bba9-8c35-400f-b0a4-02c205e79bcb" 
+          roomId: "c4357d05-a786-48c2-a7a3-2a1dffbd2fe9" 
         });
       }
     });

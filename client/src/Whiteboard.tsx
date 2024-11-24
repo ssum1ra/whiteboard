@@ -1,22 +1,30 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 
 type SocketType = SocketIOClient.Socket;
+
+interface TimerState {
+  startTime: number;
+  duration: number;
+  intervalId?: number;
+}
 
 const Whiteboard: React.FC = () => {
   const socketRef = useRef<SocketType | null>(null);
   const socketRef2 = useRef<SocketType | null>(null);
   const socketRef3 = useRef<SocketType | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number>(0);
+  const timerRef = useRef<TimerState | null>(null);
 
   useEffect(() => {
     const prevPlayerId = localStorage.getItem('playerId');
     const prevRoomId = localStorage.getItem('roomId');
 
-    socketRef.current = io("http://175.45.205.6:3000/game");
-    socketRef2.current = io("http://175.45.205.6:3000/drawing", {
+    socketRef.current = io("http://localhost:3000/game");
+    socketRef2.current = io("http://localhost:3000/drawing", {
       auth: { roomId: prevRoomId, playerId: prevPlayerId}
     });
-    socketRef3.current = io("http://175.45.205.6:3000/chat", {
+    socketRef3.current = io("http://localhost:3000/chat", {
       auth: { roomId: prevRoomId, playerId: prevPlayerId }
     });
 
@@ -30,7 +38,7 @@ const Whiteboard: React.FC = () => {
         });
       } else {
         socketRef.current?.emit("joinRoom", { 
-          roomId: "c4357d05-a786-48c2-a7a3-2a1dffbd2fe9" 
+          roomId: "1" 
         });
       }
     });
@@ -60,7 +68,7 @@ const Whiteboard: React.FC = () => {
     socketRef.current.on('playerLeft', (data) => {
       console.log('player left:', data);
       // 나간 플레이어가 호스트였고 내가 새 호스트가 되었다면
-      if (data.room.hostId === localStorage.getItem('playerId')) {
+      if (data.hostId === localStorage.getItem('playerId')) {
         console.log('You are now the host!');
       }
     });
@@ -72,6 +80,42 @@ const Whiteboard: React.FC = () => {
     socketRef3.current.on('messageReceived', (data) => {
       console.log('messageReceived:', data);
     });
+
+    socketRef.current.on('settingsUpdated', (data) => {
+      console.log('settingsUpdated:', data.settings);
+    });
+
+    socketRef.current.on('drawingGroupRoundStarted', (data) => {
+      console.log('drawingGroupRoundStarted:', data);
+      startLocalTimer(Date.now(), data.drawTime * 1000);
+    })
+
+    socketRef.current.on('guesserRoundStarted', (data) => {
+      console.log('guesserRoundStarted:', data);
+      startLocalTimer(Date.now(), data.drawTime * 1000);
+    })
+
+    socketRef.current.on('timerSync', (data) => {
+      console.log('Timer sync:', data);
+      const localRemaining = timerRef.current 
+        ? Math.max(0, timerRef.current.duration - (Date.now() - timerRef.current.startTime))
+        : 0;
+      
+      // 1초 이상 차이나면 보정
+      if (Math.abs(localRemaining - data.remaining) > 1000) {
+        const newStartTime = Date.now() - (timerRef.current?.duration || 0) + data.remaining;
+        startLocalTimer(newStartTime, timerRef.current?.duration || 0);
+      }
+    });
+
+    socketRef.current.on('drawingTimeEnded', () => {
+      console.log('drawingTimeEnded');
+      if (timerRef.current?.intervalId) {
+        clearInterval(timerRef.current.intervalId);
+      }
+      timerRef.current = null;
+      setRemainingTime(0);
+    });
   }, []);
 
   const onClick = () => {
@@ -82,11 +126,48 @@ const Whiteboard: React.FC = () => {
     socketRef3.current?.emit('sendMessage', { message: "hi" } );
   }
 
+  const onClick3 = () => {
+    socketRef.current?.emit('updateSettings', { settings: { maxPlayers: 20 } });
+  }
+
+  const startLocalTimer = (startTime: number, duration: number) => {
+    if (timerRef.current?.intervalId) {
+      window.clearInterval(timerRef.current.intervalId);
+    }
+
+    timerRef.current = {
+      startTime,
+      duration
+    };
+
+    const intervalId = window.setInterval(() => {
+      const now = Date.now();
+      const elapsed = now - startTime;
+      const remaining = Math.max(0, duration - elapsed);
+      
+      setRemainingTime(Math.ceil(remaining / 1000));
+
+      if (remaining <= 0) {
+        window.clearInterval(intervalId);
+        timerRef.current = null;
+      }
+    }, 100);
+
+    timerRef.current.intervalId = intervalId;
+  };
+
+  const onClick4 = () => {
+    socketRef.current?.emit('gameStart');
+  }
+
   return (
     <>
       <div>test</div>
+      <div>Remaining Time: {remainingTime}s</div>
       <button onClick={() => onClick()}>draw</button>
       <button onClick={() => onClick2()}>chat</button>
+      <button onClick={() => onClick3()}>updateSettings</button>
+      <button onClick={() => onClick4()}>gameStart</button>
     </>
   );
 };

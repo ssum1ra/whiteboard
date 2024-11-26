@@ -38,7 +38,7 @@ const Whiteboard: React.FC = () => {
         });
       } else {
         socketRef.current?.emit("joinRoom", { 
-          roomId: "1" 
+          roomId: "2" 
         });
       }
     });
@@ -115,6 +115,26 @@ const Whiteboard: React.FC = () => {
       }
       timerRef.current = null;
       setRemainingTime(0);
+      startLocalTimer(Date.now(), 10 * 1000);
+    });
+
+    socketRef.current.on('roundEnded', (data) => {
+      console.log('roundEnded:', data);
+      if (timerRef.current?.intervalId) {
+        clearInterval(timerRef.current.intervalId);
+      }
+      timerRef.current = null;
+      setRemainingTime(0);
+      startLocalTimer(Date.now(), 10 * 1000);
+    });
+
+    socketRef.current.on('gameEnded', () => {
+      console.log('gameEnded');
+      if (timerRef.current?.intervalId) {
+        clearInterval(timerRef.current.intervalId);
+      }
+      timerRef.current = null;
+      setRemainingTime(0);
     });
   }, []);
 
@@ -160,6 +180,11 @@ const Whiteboard: React.FC = () => {
     socketRef.current?.emit('gameStart');
   }
 
+  const handleSubmitGuess = (answer: string) => {
+    console.log('submitting guess:', answer);
+    socketRef.current?.emit('checkAnswer', { answer });
+  };
+
   return (
     <>
       <div>test</div>
@@ -168,6 +193,15 @@ const Whiteboard: React.FC = () => {
       <button onClick={() => onClick2()}>chat</button>
       <button onClick={() => onClick3()}>updateSettings</button>
       <button onClick={() => onClick4()}>gameStart</button>
+      <input 
+        type="text"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            handleSubmitGuess(e.currentTarget.value);
+            e.currentTarget.value = '';
+          }
+        }}
+      />
     </>
   );
 };

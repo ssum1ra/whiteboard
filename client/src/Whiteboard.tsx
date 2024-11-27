@@ -108,8 +108,8 @@ const Whiteboard: React.FC = () => {
       }
     });
 
-    socketRef.current.on('drawingTimeEnded', () => {
-      console.log('drawingTimeEnded');
+    socketRef.current.on('drawingTimeEnded', (data) => {
+      console.log('drawingTimeEnded', data);
       if (timerRef.current?.intervalId) {
         clearInterval(timerRef.current.intervalId);
       }
@@ -136,6 +136,10 @@ const Whiteboard: React.FC = () => {
       timerRef.current = null;
       setRemainingTime(0);
     });
+
+    socketRef.current.on('submitDrawing', () => {
+      socketRef.current?.emit('submittedDrawing', { drawing: 'drawing'})
+    })
   }, []);
 
   const onClick = () => {
